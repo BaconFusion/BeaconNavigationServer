@@ -1,0 +1,6 @@
+1. Anzahl Beacons		2byte
+2. pro Beacon:
+	2.1. UUID			16byte
+	2.2. Major			2byte
+	2.3. Minor			2byte
+	2.4. Signalstärke	1byte
