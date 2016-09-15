@@ -1,0 +1,38 @@
+<project name="BeaconNavigationServer" default="dist" basedir=".">
+	<property name="app.name" value="BeaconNavigationServer"/>
+	<property name="class.dir" value="Main/bin"/>
+	<property name="source.dir" value="Main/src"/>
+	<property name="doc.dir" value="Main/doc"/>
+	<property name="dist.dir" value="Main/dist"/>
+	
+	<target name="init">
+		<tstamp/>
+		<mkdir dir="${class.dir}"/>
+		<mkdir dir="${doc.dir}"/>
+		<mkdir dir="${dist.dir}"/>
+	</target>
+	
+	<target name="doc" depends="init" description="generate documentation">
+		<javadoc sourcepath="${source.dir}" destdir="${doc.dir}"/>
+	</target>
+  
+	<target name="compile" depends="init" description="compile sources">
+		<javac includeantruntime="false" srcdir="${source.dir}" destdir="${class.dir}"/>
+	</target>
+
+	<target name="dist" depends="compile" description="generate the distribution">
+		<jar jarfile="${dist.dir}/${app.name}.jar" basedir="${class.dir}" manifest="MANIFEST.MF"/>
+	</target>
+
+	<target name="run" depends="dist">
+		<java jar="${dist.dir}/${app.name}.jar" fork="true"/>
+	</target>
+
+	<target name="clean"
+		description="clean up">
+		<delete dir="${class.dir}"/>
+		<delete dir="${doc.dir}"/>
+		<delete dir="${dist.dir}"/>
+	</target>	
+</project>
+

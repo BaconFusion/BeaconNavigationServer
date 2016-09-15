@@ -26,10 +26,14 @@ public class Server implements Runnable {
 			e.printStackTrace();
 			return;
 		}
-		try {
-			Collection<Beacon> beacons = Beacon.readBeacons(dis);
-		} catch (IOException e) {
-			e.printStackTrace();
+		while (true) {
+			try {
+				Collection<Beacon> beacons = Beacon.readBeacons(dis);
+			} catch (IOException e) {
+				e.printStackTrace();
+				break;
+			}
+			System.out.println();
 		}
 	}
 }

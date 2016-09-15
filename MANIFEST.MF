@@ -1,0 +1,2 @@
+Main-Class: me.glor.BeaconNavigationServer.Run
+Manifest-Version: 1.0
