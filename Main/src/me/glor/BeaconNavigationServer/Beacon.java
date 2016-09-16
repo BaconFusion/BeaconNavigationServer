@@ -14,10 +14,12 @@ public class Beacon {
 	public long uuid1, uuid2;    // 8+8 = 16 byte
 	public short major, minor;    // 2 byte each
 	public short rssi = 0;
+	public long time;
 	private Beacon() {
 	}
 
 	public Beacon(DataInputStream dis) throws IOException {
+		time = System.currentTimeMillis();
 		uuid1 = dis.readLong();
 		uuid2 = dis.readLong();
 		major = dis.readShort();
@@ -66,6 +68,10 @@ public class Beacon {
 	}
 
 	public String toString() {
-		return "[" + Long.toHexString(uuid1) + "-" + Long.toHexString(uuid2) + "," + Integer.toHexString(major) + "," + Integer.toHexString(minor) + "," + rssi + "]";
+		return time + "[" + Long.toHexString(uuid1) + "-" + Long.toHexString(uuid2) + "," + Integer.toHexString(major) + "," + Integer.toHexString(minor) + "," + rssi + "]";
+	}
+
+	public String toCSVLine() {
+		return time + ", " + Long.toHexString(uuid1) + ", " + Long.toHexString(uuid2) + ", " + Integer.toHexString(major) + ", " + Integer.toHexString(minor) + ", " + rssi;
 	}
 }
