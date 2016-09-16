@@ -1,6 +1,19 @@
+0. Typ					1byte
+
+Variante 0: Beacon Broadcast
 1. Anzahl Beacons		2byte
 2. pro Beacon:
 	2.1. UUID			16byte
 	2.2. Major			2byte
 	2.3. Minor			2byte
-	2.4. Signalstärke	1byte
+2.4. Signalstärke 1byte
+
+Variante 1: Raw RSSI
+1. Anzahl Messpunkte
+2. pro Messpunkt
+	2.1. Entfernung in m float	4byte
+	2.2. RSSI					1byte
+
+Variante 2: Random Stuff we don't care about...
+1. Typ Daten		1 byte
+2. Daten			n byte
