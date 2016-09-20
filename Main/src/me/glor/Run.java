@@ -1,8 +1,8 @@
-package me.glor.BeaconNavigationServer;
+package me.glor;
 
-import java.io.FileWriter;
+import me.glor.BeaconNavigation.Logger;
+
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -10,31 +10,27 @@ import java.net.Socket;
  * Created by glor on 9/14/16.
  */
 public class Run {
-	public static final int PORT = 6788;
 	public static final String logFilePrefix = "./data";
 	public static final String logFileSuffix = ".log";
-
-	public static int logFileCounter = 0;
-
-	public static PrintWriter getLogFile() {
-		logFileCounter++;
-		FileWriter fw = null;
-		try {
-			fw = new FileWriter(logFilePrefix + logFileCounter + logFileSuffix);
-		} catch (IOException e) {
-			e.printStackTrace();
-			throw new RuntimeException();
-		}
-		PrintWriter pw = new PrintWriter(fw);
-		return pw;
-	}
+	public static int PORT = 6788;
 
 	public static void main(String[] args) {
-
-		PrintWriter log = getLogFile();
+		Logger log = Logger.getLogFile();
 		log.println("System log file");
 		log.flush();
 
+		int i = 0;
+		while (i < args.length) {
+			if (args[i++].compareTo("-p") == 0) {
+				if (i < args.length || !args[i].matches("[0-9]+"))
+					throw new IllegalArgumentException("You need to specify a valid port after '-p'");
+				int port = Integer.parseInt(args[i]);
+				if (port < 0 || port > 65535)
+					throw new IllegalArgumentException("Port numbers p does not match 0>=p<=65535");
+			} else {
+				throw new IllegalArgumentException("Unknown Argument: " + args[i]);
+			}
+		}
 
 		ServerSocket welcomeSocket = null;
 		try {

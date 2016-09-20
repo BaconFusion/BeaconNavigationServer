@@ -1,8 +1,11 @@
-package me.glor.BeaconNavigationServer;
+package me.glor;
+
+import me.glor.BeaconNavigation.Beacon;
+import me.glor.BeaconNavigation.BeaconCallee;
+import me.glor.BeaconNavigation.Logger;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Collection;
 
@@ -27,22 +30,27 @@ public class Server implements Runnable {
 			e.printStackTrace();
 			return;
 		}
-		PrintWriter log = Run.getLogFile();
-		log.println("time, UUID1, UUID2, Major, Minor, rssi");
+		Logger log = Logger.getLogFile();
+
+		Table<Beacon> table = new Table<>();
+		CallbackHandler callbackHandler = new CallbackHandler(table, new BeaconCallee());
+
+		log.println("time, UUID1, UUID2, Major, Minor, distance");
 		while (true) {
 			try {
 				Collection<Beacon> beacons = Beacon.readBeacons(dis);
 				for (Beacon beacon : beacons) {
-					System.out.println("printing " + beacon.toCSVLine());
+					//System.out.println("printing " + beacon.toCSVLine());
 					log.println(beacon.toCSVLine());
 					log.flush();
 				}
+				table.update(beacons);
+				System.out.println(table.toString());
 			} catch (IOException e) {
 				e.printStackTrace();
 				break;
 			}
 			System.out.println();
 		}
-		log.close();
 	}
 }
