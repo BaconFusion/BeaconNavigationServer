@@ -16,18 +16,22 @@ Variante 1: Raw RSSI			1byte
 	2.2. RSSI					4byte
 
 Variante 2: Random Stuff we don't care about...	1byte
-1. Typ Daten		1 byte
-2. Länge Daten		1 byte
-3. Daten (float)	n*4 byte
+1. Typ Daten			1 byte
+2. Länge Daten			1 byte
+3. Daten (float)		n*4 byte
 
 
 Server to client
-Variante 0: Position				1byte
-1. x				4byte
-2. y				4byte
+Variante 0: Position	1byte
+1. Anzahl Koordinaten
+2. pro Koordinate
+	2.1 x				4byte
+	2.2 y				4byte
+	2.3 identifier		4byte
 
 Variante 1: Ergebnisse Kalibration	1byte
-1. drei Parameter
+1. 4 Parameter
 1.1. a	4byte
 1.2. b	4byte
 1.3. c	4byte
+1.4. d	4byte
