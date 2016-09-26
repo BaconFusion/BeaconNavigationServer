@@ -1,10 +1,13 @@
 package me.glor;
 
+import me.glor.BeaconNavigation.Beacon;
+import me.glor.BeaconNavigation.SimpleKalman;
+
 import java.util.*;
 
 /**
  * A Table that holds Object with a time to live.
- * Time is based on ticks. Updating the table takes one tick.
+ * Time is based on ticks. Updating the beaconTable takes one tick.
  *
  * @param <T> Contained Object type must {@link Comparable} interface
  * @author glor
@@ -13,12 +16,13 @@ public class Table<T extends Comparable<T>> implements Iterable<T> {
 	public final int TTL;
 	private LinkedList<Thread> callbacks = new LinkedList<>();
 	private TreeMap<T, Integer> container = new TreeMap<>();
+	private TreeMap<T, SimpleKalman> filters = new TreeMap<>();
 
 	/**
 	 * Default TTL (Time To Live) is 3
 	 */
 	public Table() {
-		TTL = 3;
+		TTL = 20;
 	}
 
 	/**
@@ -38,10 +42,28 @@ public class Table<T extends Comparable<T>> implements Iterable<T> {
 	public void update(Collection<T> collection) {
 		synchronized (container) {
 			for (T t : collection) {
+				if (t instanceof Beacon) {
+					SimpleKalman sk = filters.get(t);
+					if (sk == null) {
+						sk = new SimpleKalman();
+						filters.put(t, sk);
+					}
+					sk.kalman_update(((Beacon) t).distance);
+				}
+				container.remove(t);
 				container.put(t, TTL);
 			}
 		}
 		tick();
+	}
+
+	public double getKalman(Beacon b) {
+		SimpleKalman sk = filters.get(b);
+		double x = 0;
+		if (b != null) {
+			x = filters.get(b).getX();
+		}
+		return x;
 	}
 
 	public int getTTL(T t) {
@@ -115,7 +137,7 @@ public class Table<T extends Comparable<T>> implements Iterable<T> {
 					thread.notify();
 				}
 			} else
-				System.err.println("Thread not ready");
+				System.err.println("Thread not ready: " + thread.getState());
 		}
 	}
 }

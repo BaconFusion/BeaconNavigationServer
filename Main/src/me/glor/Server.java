@@ -3,6 +3,8 @@ package me.glor;
 import me.glor.BeaconNavigation.Beacon;
 import me.glor.BeaconNavigation.BeaconCallee;
 import me.glor.BeaconNavigation.Logger;
+import me.glor.me.glor.SmartphoneSensorNavigation.SmartphoneSensorCallee;
+import me.glor.me.glor.SmartphoneSensorNavigation.SmartphoneSensors;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -12,45 +14,58 @@ import java.util.Collection;
 /**
  * Created by glor on 9/14/16.
  */
-public class Server implements Runnable {
+public class Server {
 	Socket connectionSocket = null;
+	DataInputStream dis;
+	Logger log = Logger.getLogFile();
+	Table<Beacon> beaconTable;
+	Table<SmartphoneSensors> sensorTable;
+	CallbackHandler beaconHandler;
+	CallbackHandler sensorHandler;
 
 	private Server() {
+		throw new RuntimeException();
 	}
 
-	public Server(Socket socket) {
+	public Server(Socket socket) throws IOException {
 		this.connectionSocket = socket;
+		dis = new DataInputStream(connectionSocket.getInputStream());
+		beaconTable = new Table();
+		beaconHandler = new CallbackHandler(beaconTable, new BeaconCallee(connectionSocket.getOutputStream()));
+
+		sensorTable = new Table();
+		sensorHandler = new CallbackHandler(beaconTable, new SmartphoneSensorCallee(connectionSocket.getOutputStream()));
 	}
 
-	public void run() {
-		DataInputStream dis;
+	public void runBeacon() {
+		log.println(Beacon.getCSVHeader());
 		try {
-			dis = new DataInputStream(connectionSocket.getInputStream());
+
+			Collection<Beacon> data = Beacon.fill(dis);
+			beaconTable.update(data);
+			for (Beacon dataContainer : data) {
+				//System.out.println(dataContainer);
+				log.println(dataContainer.toCSVLine() + ", " + beaconTable.getKalman(dataContainer));
+				log.flush();
+			}
+			//System.out.println(beaconTable.toString());
 		} catch (IOException e) {
 			e.printStackTrace();
-			return;
 		}
-		Logger log = Logger.getLogFile();
+	}
 
-		Table<Beacon> table = new Table<>();
-		CallbackHandler callbackHandler = new CallbackHandler(table, new BeaconCallee());
-
-		log.println("time, UUID1, UUID2, Major, Minor, distance");
-		while (true) {
-			try {
-				Collection<Beacon> beacons = Beacon.readBeacons(dis);
-				for (Beacon beacon : beacons) {
-					//System.out.println("printing " + beacon.toCSVLine());
-					log.println(beacon.toCSVLine());
-					log.flush();
-				}
-				table.update(beacons);
-				System.out.println(table.toString());
-			} catch (IOException e) {
-				e.printStackTrace();
-				break;
+	public void runSmartphoneSensors() {
+		log.println(SmartphoneSensors.getCSVHeader());
+		try {
+			Collection<SmartphoneSensors> data = SmartphoneSensors.fill(dis);
+			sensorTable.update(data);
+			for (SmartphoneSensors dataContainer : data) {
+				log.println(dataContainer.toCSVLine());
+				log.flush();
 			}
-			System.out.println();
+			//System.out.println(beaconTable.toString());
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 }

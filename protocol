@@ -1,6 +1,6 @@
 Client to Server
 
-Variante 0: Beacon Broadcast	1byte
+Variante 1: Beacon Broadcast	1byte
 1. Anzahl Beacons			2byte
 2. pro Beacon:
 	2.1. UUID				16byte
@@ -9,24 +9,24 @@ Variante 0: Beacon Broadcast	1byte
 	2.4. Signalstärke in m	4byte
 3. currentTimeInMillis		8byte
 
-Variante 1: Raw RSSI			1byte
+Variante 2: Raw RSSI			1byte
 1. Anzahl Messpunkte			1byte
 2. pro Messpunkt
 	2.1. Entfernung in m float	4byte
-	2.2. RSSI					4byte
+	2.2. RSSI					1byte
 
-Variante 2: Random Stuff we don't care about...	1byte
+Variante 3: Random Stuff we don't care about...	1byte
 1. Typ Daten		1 byte
 2. Länge Daten		1 byte
 3. Daten (float)	n*4 byte
 
 
 Server to client
-Variante 0: Position				1byte
+Variante 1: Position				1byte
 1. x				4byte
 2. y				4byte
 
-Variante 1: Ergebnisse Kalibration	1byte
+Variante 2: Ergebnisse Kalibration	1byte
 1. drei Parameter
 1.1. a	4byte
 1.2. b	4byte

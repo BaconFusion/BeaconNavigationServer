@@ -25,6 +25,10 @@ public class CallbackHandler<T extends Comparable<T>> implements Runnable {
 	public CallbackHandler(Table<T> table, Callee<T> callee) {
 		this.table = table;
 		this.callee = callee;
+
+		//remove
+		callee.setTable(table);
+
 		table.addCallback(new Thread(this));
 	}
 

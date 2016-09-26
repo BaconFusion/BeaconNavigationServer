@@ -3,10 +3,12 @@ package me.glor.BeaconNavigation;
 import me.glor.Callee;
 import me.glor.Matrix.Vector2D;
 import me.glor.RunExternal;
+import me.glor.Table;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collection;
-import java.util.Scanner;
 
 import static me.glor.Matrix.Vector2D.*;
 
@@ -15,40 +17,58 @@ import static me.glor.Matrix.Vector2D.*;
  */
 public class BeaconCallee implements Callee<Beacon> {
 	public static final double epsilon = 10e-5;
+	private static RunExternal re = null;
+	public Table<Beacon> t = null;
+	DataOutputStream dos;
 
-	public static String masterFormel(Vector2D vector, double length) {
-		return "(" + length + " - sqrt( (" + vector.x() + ")";
+	private BeaconCallee() {
+		throw new RuntimeException();
 	}
 
-	public static Vector2D calcPositionOctave(Vector2D[] vectors, double[] lengths) {
-		RunExternal re = null;
+	public BeaconCallee(OutputStream outputStream) {
+		dos = new DataOutputStream(outputStream);
 		try {
-			re = new RunExternal(RunExternal.octave);
+			re = new RunExternal(RunExternal.getCommand(RunExternal.searchProgram("octave"), "-i", "-q", "--no-window-system"));
 		} catch (IOException e) {
 			e.printStackTrace();
-			return null;
+			throw new RuntimeException("Failed to start process.");
 		}
+		re.println("silent_functions(1);\n" +
+				"function calcMin (fn)\n" +
+				"\ty = fminsearch (fn, [0;0]);\n" +
+				"\tprintf(\"%.5f %.5f\\n\", y(1), y(2));\n" +
+				"endfunction");
+		try {
+			for (int i = 0; i < 6; i++) {
+				re.p.getInputStream().read();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
-		// vector can be null
-		if (vectors.length < 3) {
-			System.out.println("Cannot trilaterate with less than 3 datapoints.");
-		}
+	public static String masterFormel(Vector2D vector, double length) {
+		return "abs(" + length + "-sqrt( (" + vector.x() + "-x(1)" + ")^2 + (" + vector.y() + " - x(2))^2 ))";
+	}
+
+	public static String fullMasterFormel(int len, Vector2D[] vectors, double[] lengths) {
 		String octaveCommand = "calcMin( @(x) " + masterFormel(vectors[0], lengths[0]);
-		for (int i = 1; i < vectors.length; i++) {
+		for (int i = 1; i < len; i++) {
 			octaveCommand += " + " + masterFormel(vectors[i], lengths[i]);
 		}
 
-		octaveCommand += ", " + vectors.length + ")";
+		octaveCommand += ");";
+		return octaveCommand;
+	}
 
-		re.stdin.println("5");
-		re.stdin.close();
+	public static Vector2D calcPositionOctave(int len, Vector2D[] vectors, double[] lengths) {
+		//System.out.println(fullMasterFormel(len, vectors, lengths));
+		re.println(fullMasterFormel(len, vectors, lengths));
 
-		float f1 = re.stdout.nextFloat();
-		float f2 = re.stdout.nextFloat();
-
-		System.out.println(f1);
-		System.out.println(f2);
-		return null;
+		String[] line = re.stdout.nextLine().split(" ");
+		float f1 = Float.parseFloat(line[1]);
+		float f2 = Float.parseFloat(line[2]);
+		return new Vector2D(f1, f2);
 	}
 
 	/**
@@ -58,12 +78,12 @@ public class BeaconCallee implements Callee<Beacon> {
 	 * @param lengths Signal strength of the Beacons
 	 * @return Your approximate Position
 	 */
-	public static Vector2D calc2DPosition(Vector2D[] vectors, double[] lengths) {
-		if (vectors.length != lengths.length || vectors.length == 1)
-			throw new RuntimeException("Array Length too small or not matching.");
-		Vector2D[] rot = new Vector2D[vectors.length];
+	public static Vector2D calc2DPosition(int len, Vector2D[] vectors, double[] lengths) {
+		if (len < 2)
+			throw new RuntimeException("Cannot calc Position with less than 2 Beacons.");
+		Vector2D[] rot = new Vector2D[len];
 		Vector2D m = mean(vectors);
-		for (int i = 0; i < rot.length; i++) {
+		for (int i = 0; i < len; i++) {
 			rot[i] = new Vector2D(m.x(), m.y());
 		}
 		// init first two ones
@@ -73,13 +93,12 @@ public class BeaconCallee implements Callee<Beacon> {
 		while (maxDiff > epsilon) {
 			maxDiff = 0;
 			//System.out.println();
-			for (int i = 0; i < vectors.length; i++) {
+			for (int i = 0; i < len; i++) {
 				tmp = rot[i];
 				rot[i] = add(vectors[i],
 						scaleTo(lengths[i],
 								fromTo(vectors[i],
 										meanWithout(rot[i], rot))));
-				//System.out.println("rot["+i+"]" + rot[i] + " diff " + sub(tmp, rot[i]).length());
 				maxDiff = Math.max(maxDiff, sub(tmp, rot[i]).length());
 			}
 			j++;
@@ -89,56 +108,61 @@ public class BeaconCallee implements Callee<Beacon> {
 	}
 
 	public static void main(String[] args) throws IOException {
-		Vector2D a = new Vector2D(0, 2);
-		double alen = 0.5;
-		Vector2D b = new Vector2D(0, 0);
-		double blen = 0.5;
-		Vector2D c = new Vector2D(1, 0);
-		double clen = 0.5;
-		Scanner in = new Scanner(System.in);
-		while (true) {
-			double ax, ay, al, bx, by, bl, cx, cy, cl;
-			System.err.println("a: x, y, length");
-			ax = in.nextDouble();
-			ay = in.nextDouble();
-			al = in.nextDouble();
-			System.err.println("b: x, y, length");
-			bx = in.nextDouble();
-			by = in.nextDouble();
-			bl = in.nextDouble();
-			System.err.println("c: x, y, length");
-			cx = in.nextDouble();
-			cy = in.nextDouble();
-			cl = in.nextDouble();
-			Vector2D[] vectors = new Vector2D[]{new Vector2D(ax, ay)};//, new Vector2D(bx,by), new Vector2D(cx,cy)};
-			Vector2D out = calc2DPosition(vectors, new double[]{al});//,bl,cl
-			//Vector2D out = calc2DPosition(a, alen, b, blen, c, clen);
-			//System.out.println("plot(x=c(" + a.x() + "," + b.x() + "," + c.x() + "," + out.x() + "),y=c(" + a.y() + "," + b.y() + "," + c.y() + "," + out.y() + "))");
-			//System.out.println("text(x=c(" + a.x() + "," + b.x() + "," + c.x() + "," + out.x() + "),y=c(" + a.y() + "," + b.y() + "," + c.y() + "," + out.y() + "),labels=c('x1','x2','x3','out'), cex=0.7, pos=3)");
-			System.err.println(out);
-			System.err.flush();
-			System.out.println("plot(x=c(" + ax + "," + bx + "," + cx + "," + out.x() + "),y=c(" + ay + "," + by + "," + cy + "," + out.y() + "))");
-			System.out.println("text(x=c(" + ax + "," + bx + "," + cx + "," + out.x() + "),y=c(" + ay + "," + by + "," + cy + "," + out.y() + "),labels=c('x1','x2','x3','out'), cex=0.7, pos=3)");
-
+		Vector2D v1 = new Vector2D(0, 1);
+		Vector2D v2 = new Vector2D(2, 3);
+		Vector2D v3 = new Vector2D(4, 5);
+		Vector2D[] v = new Vector2D[]{v1, v2, v3};
+		System.out.println(fullMasterFormel(3, v, new double[]{1.5, 2.3, 4.1}));
+		double d = System.currentTimeMillis();
+		for (int i = 0; i < 100; i++) {
+			System.out.println(calcPositionOctave(3, v, new double[]{1.5, 2.3, 4.1}));
 		}
+		System.out.println(System.currentTimeMillis() - d);
+
 	}
 
 	@Override
 	public void calcPosition(Collection<Beacon> collection) {
-		if (collection.size() < 2) {
-			System.out.println("Cannot calculate Position with just 1 Vector.");
-			return;
+		for (Beacon beacon : collection) {
+			if (beacon.minor == (short) 0xffff8ca8)
+				System.out.println(beacon.distance + "\t\t" + t.getKalman(beacon));
 		}
+		System.out.println();
+	}
+
+	//remove
+	@Override
+	public void setTable(Table table) {
+		t = table;
+	}
+/*
 		Vector2D[] vectors = new Vector2D[collection.size()];
 		double[] lengths = new double[collection.size()];
-		int i = 0;
+		int len = 0;
 		for (Beacon beacon : collection) {
-			lengths[i] = beacon.distance;
-			vectors[i++] = BeaconDatabase.getPosition(beacon);
-			System.out.println(BeaconDatabase.getPosition(beacon));
+			Vector2D v = BeaconDatabase.getPosition(beacon);
+			if (v != null) {
+				vectors[len] = v;
+				lengths[len] = beacon.distance;
+				len++;
+			}
 		}
 
-
-		System.out.println(calc2DPosition(vectors, lengths));
-	}
+		if (len < 3) {
+			System.err.println("Cannot trilaterate with less than 3 known beacons." + len);
+			return;
+		}
+		Vector2D result = calcPositionOctave(len, vectors, lengths);
+		//Vector2D alternative = calc2DPosition(len, vectors, lengths);
+		System.out.println(result);
+		//System.out.println(alternative);
+		System.out.println();
+		try {
+			dos.writeFloat((float)result.x());
+			dos.writeFloat((float)result.y());
+		} catch (IOException e) {
+			e.printStackTrace();
+			return;
+		}
+	}*/
 }

@@ -1,7 +1,10 @@
 package me.glor;
 
+import me.glor.BeaconNavigation.BeaconCalibration;
 import me.glor.BeaconNavigation.Logger;
+import me.glor.BeaconNavigation.TestKalman;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -9,12 +12,27 @@ import java.net.Socket;
 /**
  * Created by glor on 9/14/16.
  */
-public class Run {
+public class Run implements Runnable {
 	public static final String logFilePrefix = "./data";
 	public static final String logFileSuffix = ".log";
+	public static final int MODUS_BEACON_BROADCAST = 0;
+	public static final int MODUS_BEACON_CALIBRATE = 1;
+	public static final int MODUS_SMARTPHONE_SENSORS = 2;
 	public static int PORT = 6788;
+	Socket connectionSocket;
+
+	private Run() {
+		throw new UnsupportedOperationException();
+	}
+
+	public Run(Socket connectionSocket) {
+		this.connectionSocket = connectionSocket;
+	}
 
 	public static void main(String[] args) {
+		//remove
+		new Thread(new TestKalman()).start();
+
 		Logger log = Logger.getLogFile();
 		log.println("System log file");
 		log.flush();
@@ -28,7 +46,7 @@ public class Run {
 				if (port < 0 || port > 65535)
 					throw new IllegalArgumentException("Port numbers p does not match 0>=p<=65535");
 			} else {
-				throw new IllegalArgumentException("Unknown Argument: " + args[i]);
+				throw new IllegalArgumentException();
 			}
 		}
 
@@ -49,7 +67,61 @@ public class Run {
 				System.out.println("Connection establishment failed.");
 				continue;
 			}
-			new Thread(new Server(connectionSocket)).start();
+			System.out.println("Connection established.");
+			new Thread(new Run(connectionSocket)).start();
+		}
+	}
+
+	@Override
+	public void run() {
+		int modus;
+		Server server = null;
+		while (connectionSocket.isConnected()) {
+			System.out.flush();
+			try {
+				modus = new DataInputStream(connectionSocket.getInputStream()).readByte();
+			} catch (IOException e) {
+				e.printStackTrace();
+				try {
+					connectionSocket.close();
+				} catch (IOException e1) {
+				}
+				return;
+			}
+			System.out.flush();
+			switch (modus) {
+				case MODUS_BEACON_BROADCAST:
+					if (server == null)
+						try {
+							server = new Server(connectionSocket);
+						} catch (IOException e) {
+							e.printStackTrace();
+							return;
+						}
+					server.runBeacon();
+					break;
+				case MODUS_BEACON_CALIBRATE:
+					try {
+						BeaconCalibration.calibrate(connectionSocket);
+					} catch (IOException e) {
+						e.printStackTrace();
+						continue;
+					}
+					break;
+				case MODUS_SMARTPHONE_SENSORS:
+					if (server == null)
+						try {
+							server = new Server(connectionSocket);
+						} catch (IOException e) {
+							e.printStackTrace();
+							return;
+						}
+
+					break;
+				default:
+					System.err.println("Wrong Modus " + modus);
+					continue;
+			}
 		}
 	}
 }
