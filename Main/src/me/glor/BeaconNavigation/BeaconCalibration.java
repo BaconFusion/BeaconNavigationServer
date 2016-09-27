@@ -1,6 +1,7 @@
 package me.glor.BeaconNavigation;
 
 
+import me.glor.Run;
 import me.glor.RunExternal;
 
 import java.awt.*;
@@ -24,6 +25,7 @@ public class BeaconCalibration {
 		float[] params = calcParameters(distance, rssi);
 		DataOutputStream dos = new DataOutputStream(connectionSocket.getOutputStream());
 
+		dos.writeByte(Run.MODUS_BEACON_CALIBRATE);
 		//do not use more than 4 params
 		for (int i = 0; i < 4; i++) {
 			float f;
