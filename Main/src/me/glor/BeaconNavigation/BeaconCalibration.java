@@ -19,6 +19,7 @@ public class BeaconCalibration {
 			distance[i] = dis.readFloat();
 			rssi[i] = dis.readFloat();
 		}
+		System.out.println("successfully received");
 		float[] params = calcParameters(distance, rssi);
 		DataOutputStream dos = new DataOutputStream(connectionSocket.getOutputStream());
 
@@ -31,6 +32,7 @@ public class BeaconCalibration {
 				f = 0;
 			dos.writeFloat(f);
 		}
+		System.out.println("successfully sent");
 	}
 
 

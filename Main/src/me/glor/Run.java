@@ -101,6 +101,7 @@ public class Run implements Runnable {
 					server.runBeacon();
 					break;
 				case MODUS_BEACON_CALIBRATE:
+					System.out.println("MODUS_BEACON_CALIBRATE");
 					try {
 						BeaconCalibration.calibrate(connectionSocket);
 					} catch (IOException e) {
