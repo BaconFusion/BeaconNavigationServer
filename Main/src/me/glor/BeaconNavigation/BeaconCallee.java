@@ -2,6 +2,7 @@ package me.glor.BeaconNavigation;
 
 import me.glor.Callee;
 import me.glor.Matrix.Vector2D;
+import me.glor.Run;
 import me.glor.RunExternal;
 import me.glor.Table;
 
@@ -20,6 +21,8 @@ public class BeaconCallee implements Callee<Beacon> {
 	private static RunExternal re = null;
 	public Table<Beacon> t = null;
 	DataOutputStream dos;
+	public double[] sum = new double[2];
+	public double cnt = 0;
 
 	private BeaconCallee() {
 		throw new RuntimeException();
@@ -123,19 +126,6 @@ public class BeaconCallee implements Callee<Beacon> {
 
 	@Override
 	public void calcPosition(Collection<Beacon> collection) {
-		for (Beacon beacon : collection) {
-			if (beacon.minor == (short) 0xffff8ca8)
-				System.out.println(beacon.distance + "\t\t" + t.getKalman(beacon));
-		}
-		System.out.println();
-	}
-
-	//remove
-	@Override
-	public void setTable(Table table) {
-		t = table;
-	}
-/*
 		Vector2D[] vectors = new Vector2D[collection.size()];
 		double[] lengths = new double[collection.size()];
 		int len = 0;
@@ -153,16 +143,23 @@ public class BeaconCallee implements Callee<Beacon> {
 			return;
 		}
 		Vector2D result = calcPositionOctave(len, vectors, lengths);
-		//Vector2D alternative = calc2DPosition(len, vectors, lengths);
-		System.out.println(result);
-		//System.out.println(alternative);
-		System.out.println();
-		try {
-			dos.writeFloat((float)result.x());
-			dos.writeFloat((float)result.y());
-		} catch (IOException e) {
-			e.printStackTrace();
-			return;
+		sum[0] += result.x();
+		sum[1] += result.y();
+		cnt++;
+		if (cnt == 5) {
+			//Vector2D alternative = calc2DPosition(len, vectors, lengths);
+			System.out.println(result);
+			//System.out.println(alternative);
+			System.out.println();
+			try {
+				dos.writeByte(Run.MODUS_BEACON_BROADCAST);
+				dos.writeFloat((float) result.x());
+				dos.writeFloat((float) result.y());
+				dos.writeByte(0);
+			} catch (IOException e) {
+				e.printStackTrace();
+				return;
+			}
 		}
-	}*/
+	}
 }

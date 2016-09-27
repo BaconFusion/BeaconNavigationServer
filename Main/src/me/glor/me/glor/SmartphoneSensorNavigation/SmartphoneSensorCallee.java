@@ -26,9 +26,4 @@ public class SmartphoneSensorCallee implements Callee<SmartphoneSensors> {
 
 	}
 
-	//remove
-	@Override
-	public void setTable(Table table) {
-
-	}
 }

@@ -7,7 +7,4 @@ import java.util.Collection;
  */
 public interface Callee<T> {
 	public void calcPosition(Collection<T> collection);
-
-	//remove
-	void setTable(Table table);
 }
