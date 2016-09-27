@@ -163,6 +163,9 @@ public class BeaconCallee implements Callee<Beacon> {
 				e.printStackTrace();
 				return;
 			}
+			sum[0] = 0;
+			sum[1] = 0;
+			cnt = 0;
 		}
 	}
 }
