@@ -147,6 +147,9 @@ public class BeaconCallee implements Callee<Beacon> {
 		sum[1] += result.y();
 		cnt++;
 		if (cnt == 5) {
+			sum[0] /= cnt;
+			sum[1] /= cnt;
+			result = new Vector2D(sum[0],sum[1]);
 			//Vector2D alternative = calc2DPosition(len, vectors, lengths);
 			System.out.println(result);
 			//System.out.println(alternative);
