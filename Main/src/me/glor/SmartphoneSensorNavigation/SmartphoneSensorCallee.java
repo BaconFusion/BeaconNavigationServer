@@ -1,7 +1,6 @@
-package me.glor.me.glor.SmartphoneSensorNavigation;
+package me.glor.SmartphoneSensorNavigation;
 
 import me.glor.Callee;
-import me.glor.Table;
 
 import java.io.DataOutputStream;
 import java.io.OutputStream;

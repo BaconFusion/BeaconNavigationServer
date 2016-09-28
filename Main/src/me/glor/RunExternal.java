@@ -8,22 +8,6 @@ import java.util.Scanner;
  */
 public class RunExternal {
 
-	public PrintWriter stdin;
-	public Scanner stdout;
-	public Scanner stderr;
-	public Process p;
-	ProcessBuilder pb;
-	private RunExternal() {
-		throw new UnsupportedOperationException();
-	}
-	public RunExternal(String... command) throws IOException {
-		File file = new File(command[0]);
-		if (!file.exists() || !file.isFile() || !file.canExecute())
-			throw new FileNotFoundException("File not a valid executable.");
-		pb = new ProcessBuilder(command);
-		//p = Runtime.getRuntime().exec(command);
-		start();
-	}
 
 	public static String queryProgram() {
 		File file;
@@ -52,7 +36,8 @@ public class RunExternal {
 			System.out.println("Windows not supported yet. Don't know where octave is in windows.");
 			return queryProgram();
 		} else {
-			throw new RuntimeException("Unknown OS. Don't know where octave is in your os.");
+			System.out.println("Unknown OS. Don't know where octave is in your os.");
+			return queryProgram();
 		}
 		String[] paths = System.getenv("PATH").split(delimiter);
 		for (String path : paths) {
@@ -83,6 +68,25 @@ public class RunExternal {
 		}).start();
 	}
 
+
+	public PrintWriter stdin;
+	public Scanner stdout;
+	public Process p;
+	ProcessBuilder pb;
+
+	private RunExternal() {
+		throw new UnsupportedOperationException();
+	}
+
+	public RunExternal(String... command) throws IOException {
+		File file = new File(command[0]);
+		if (!file.exists() || !file.isFile() || !file.canExecute())
+			throw new FileNotFoundException("File not a valid executable.");
+		pb = new ProcessBuilder(command);
+		//p = Runtime.getRuntime().exec(command);
+		start();
+	}
+
 	/**
 	 * It is very important for the process on the other side to also flush its output buffer if you want to avoid deadlocks
 	 *
@@ -96,17 +100,10 @@ public class RunExternal {
 		stdin.flush();
 	}
 
-	public void restart() throws IOException {
-		stop();
-		start();
-	}
-
 	public void start() throws IOException {
 		p = pb.start();
 		stdin = new PrintWriter(p.getOutputStream());
-		//stderr = new Scanner(p.getErrorStream());
 		stdout = new Scanner(p.getInputStream());
-		//inheritIO("subprocess sais: ",p.getInputStream(), System.out);
 		inheritIO("Subprocess " + pb.command().get(0) + " sais: ", p.getErrorStream(), System.err);
 	}
 

@@ -1,4 +1,4 @@
-package me.glor.me.glor.SmartphoneSensorNavigation;
+package me.glor.SmartphoneSensorNavigation;
 
 import java.io.DataInputStream;
 import java.io.IOException;

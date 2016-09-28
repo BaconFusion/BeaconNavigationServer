@@ -1,4 +1,4 @@
-package me.glor.BeaconNavigation;
+package me.glor.Offshore;
 
 /**
  * Created by glor on 9/24/16.

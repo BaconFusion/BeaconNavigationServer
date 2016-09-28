@@ -1,10 +1,7 @@
 package me.glor;
 
 import me.glor.BeaconNavigation.BeaconCalibration;
-import me.glor.BeaconNavigation.Logger;
-import me.glor.BeaconNavigation.TestKalman;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -18,25 +15,20 @@ public class Run implements Runnable {
 	public static final int MODUS_BEACON_BROADCAST = 0;
 	public static final int MODUS_BEACON_CALIBRATE = 1;
 	public static final int MODUS_SMARTPHONE_SENSORS = 2;
-	public static int PORT = 6788;
-	Socket connectionSocket;
+	private static int PORT = 6788;
+	private Socket connectionSocket;
+	private final TransmissionHandler th;
 
 	private Run() {
 		throw new UnsupportedOperationException();
 	}
 
-	public Run(Socket connectionSocket) {
+	public Run(Socket connectionSocket) throws IOException {
 		this.connectionSocket = connectionSocket;
+		th = new TransmissionHandler(connectionSocket);
 	}
 
-	public static void main(String[] args) {
-		//remove
-		new Thread(new TestKalman()).start();
-
-		Logger log = Logger.getLogFile();
-		log.println("System log file");
-		log.flush();
-
+	public static void readParams(String[] args) {
 		int i = 0;
 		while (i < args.length) {
 			if (args[i++].compareTo("-p") == 0) {
@@ -49,15 +41,23 @@ public class Run implements Runnable {
 				throw new IllegalArgumentException();
 			}
 		}
+	}
+
+	public static void main(String[] args) {
+
+		Logger log = Logger.getLogFile();
+		log.println("System log file");
+
+		readParams(args);
 
 		ServerSocket welcomeSocket = null;
 		try {
 			welcomeSocket = new ServerSocket(PORT);
 		} catch (IOException e) {
-			System.out.println("Could not create Socket on Port " + PORT);
-			System.exit(1);
+			throw new RuntimeException("Could not create Socket on Port " + PORT);
 		}
 		System.out.println("Started Server on port " + PORT);
+		log.println("Started Server on port " + PORT);
 
 		while (true) {
 			Socket connectionSocket;
@@ -67,61 +67,53 @@ public class Run implements Runnable {
 				System.out.println("Connection establishment failed.");
 				continue;
 			}
-			System.out.println("Connection established.");
-			new Thread(new Run(connectionSocket)).start();
+			System.out.println("Connection established to " + connectionSocket.getInetAddress());
+			log.println("Connection established to " + connectionSocket.getInetAddress());
+			try {
+				new Thread(new Run(connectionSocket)).start();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
 	@Override
 	public void run() {
 		int modus;
+
 		Server server = null;
+		try {
+			server = server = new Server(th);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		;
 		while (connectionSocket.isConnected()) {
-			System.out.flush();
 			try {
-				modus = new DataInputStream(connectionSocket.getInputStream()).readByte();
+				modus = th.getModus();
+				switch (modus) {
+					case MODUS_BEACON_BROADCAST:
+						System.out.println("MODUS_BEACON_BROADCAST");
+						server.runBeacon();
+						break;
+					case MODUS_BEACON_CALIBRATE:
+						System.out.println("MODUS_BEACON_CALIBRATE");
+						BeaconCalibration.calibrate(th);
+						break;
+					case MODUS_SMARTPHONE_SENSORS:
+						System.out.println("MODUS_SMARTPHONE_SENSORS");
+						server.runSmartphoneSensors();
+						break;
+					default:
+						throw new RuntimeException("Wrong Modus " + modus);
+				}
 			} catch (IOException e) {
-				e.printStackTrace();
 				try {
 					connectionSocket.close();
 				} catch (IOException e1) {
+					e1.printStackTrace();
 				}
 				return;
-			}
-			System.out.flush();
-			switch (modus) {
-				case MODUS_BEACON_BROADCAST:
-					if (server == null)
-						try {
-							server = new Server(connectionSocket);
-						} catch (IOException e) {
-							e.printStackTrace();
-							return;
-						}
-					server.runBeacon();
-					break;
-				case MODUS_BEACON_CALIBRATE:
-					System.out.println("MODUS_BEACON_CALIBRATE");
-					try {
-						BeaconCalibration.calibrate(connectionSocket);
-					} catch (IOException e) {
-						e.printStackTrace();
-						continue;
-					}
-					break;
-				case MODUS_SMARTPHONE_SENSORS:
-					if (server == null)
-						try {
-							server = new Server(connectionSocket);
-						} catch (IOException e) {
-							e.printStackTrace();
-							return;
-						}
-
-					break;
-				default:
-					System.err.println("Wrong Modus " + modus);
-					continue;
 			}
 		}
 	}

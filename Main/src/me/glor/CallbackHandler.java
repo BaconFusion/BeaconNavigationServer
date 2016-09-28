@@ -32,8 +32,7 @@ public class CallbackHandler<T extends Comparable<T>> implements Runnable {
 	@Override
 	public void run() {
 		while (restart) {
-			Collection<T> collection = table.toCollection();
-			callee.calcPosition(collection);
+			callee.calcPosition(table.toCollection());
 			try {
 				synchronized (currentThread()) {
 					currentThread().wait();

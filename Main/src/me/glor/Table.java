@@ -1,34 +1,30 @@
 package me.glor;
 
-import me.glor.BeaconNavigation.Beacon;
-import me.glor.BeaconNavigation.SimpleKalman;
-
 import java.util.*;
 
 /**
  * A Table that holds Object with a time to live.
- * Time is based on ticks. Updating the beaconTable takes one tick.
  *
  * @param <T> Contained Object type must {@link Comparable} interface
  * @author glor
  */
 public class Table<T extends Comparable<T>> implements Iterable<T> {
-	public final int TTL;
+	// time in millis how long an object is to remain in the table
+	public final long TTL;
 	private LinkedList<Thread> callbacks = new LinkedList<>();
-	private TreeMap<T, Integer> container = new TreeMap<>();
-	private TreeMap<T, SimpleKalman> filters = new TreeMap<>();
+	private SortedMap<T, Long> container = new TreeMap<>();
 
 	/**
-	 * Default TTL (Time To Live) is 3
+	 * Default TTL (Time To Live) is 2000ms
 	 */
 	public Table() {
-		TTL = 20;
+		TTL = 2000;
 	}
 
 	/**
 	 * Custom TTL Constructor
 	 *
-	 * @param TTL custom Time To Live
+	 * @param TTL custom Time To Live in ms
 	 */
 	public Table(int TTL) {
 		this.TTL = TTL;
@@ -40,33 +36,17 @@ public class Table<T extends Comparable<T>> implements Iterable<T> {
 	 * @param collection Collection of Objects that should be updated or added to the Table
 	 */
 	public void update(Collection<T> collection) {
+		long time = System.currentTimeMillis();
 		synchronized (container) {
 			for (T t : collection) {
-				if (t instanceof Beacon) {
-					SimpleKalman sk = filters.get(t);
-					if (sk == null) {
-						sk = new SimpleKalman();
-						filters.put(t, sk);
-					}
-					sk.kalman_update(((Beacon) t).distance);
-				}
 				container.remove(t);
-				container.put(t, TTL);
+				container.put(t, time);
 			}
 		}
-		tick();
+		tick(time);
 	}
 
-	public double getKalman(Beacon b) {
-		SimpleKalman sk = filters.get(b);
-		double x = 0;
-		if (b != null) {
-			x = filters.get(b).getX();
-		}
-		return x;
-	}
-
-	public int getTTL(T t) {
+	public long getTTL(T t) {
 		return container.get(t);
 	}
 
@@ -114,16 +94,14 @@ public class Table<T extends Comparable<T>> implements Iterable<T> {
 	/**
 	 * Let Objects age and invoke callbacks
 	 */
-	private void tick() {
+	private void tick(long time) {
 		synchronized (container) {
 			// foreach key let it age or remove it
 			Iterator<T> iterator = container.keySet().iterator();
 			while (iterator.hasNext()) {
 				T t = iterator.next();
-				int ttl = container.get(t);
-				if (ttl > 0) {
-					container.put(t, ttl - 1);
-				} else {
+				long ttl = container.get(t);
+				if (time-ttl > TTL) {
 					iterator.remove();
 				}
 			}

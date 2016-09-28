@@ -1,6 +1,4 @@
-package me.glor.BeaconNavigation;
-
-import me.glor.Run;
+package me.glor;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -37,6 +35,7 @@ public class Logger {
 
 	public void println(String string) {
 		pw.println(string);
+		pw.flush();
 	}
 
 	public void print(String string) {

@@ -1,13 +1,11 @@
 package me.glor.BeaconNavigation;
 
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**
- * Created by glor on 9/14/16.
+ * Container Class for Beacons which contains the identifiers, the approximate distance and a timestamp
  */
 public class Beacon implements Comparable<Beacon> {
 
@@ -15,18 +13,9 @@ public class Beacon implements Comparable<Beacon> {
 	public final short major, minor;    // 2 byte each
 	public final float distance;
 	public final long time;
+
 	private Beacon() {
 		throw new UnsupportedOperationException();
-	}
-
-	public Beacon(DataInputStream dis, long time) throws IOException {
-		uuid1 = dis.readLong();
-		uuid2 = dis.readLong();
-		major = dis.readShort();
-		minor = dis.readShort();
-		// stdout in as unsigned
-		distance = dis.readFloat();
-		this.time = time;
 	}
 
 	public Beacon(long uuid1, long uuid2, short major, short minor, float distance, long time) {
@@ -38,35 +27,8 @@ public class Beacon implements Comparable<Beacon> {
 		this.time = time;
 	}
 
-	public static void writeBeacons(Collection<Beacon> beacons, DataOutputStream dos) throws IOException {
-		dos.writeShort((short) beacons.size());
-		for (Beacon beacon : beacons) {
-			beacon.writeToDataOutputStream(dos);
-		}
-	}
-
-	public static Collection<Beacon> fill(DataInputStream dis) throws IOException {
-		// stdout in as unsigned	// 2 bytes
-		int beaconCount = dis.readShort();
-		long time = dis.readLong();
-		ArrayList<Beacon> beacons = new ArrayList<Beacon>(beaconCount);
-
-		for (int i = 0; i < beaconCount; i++) {
-			beacons.add(new Beacon(dis, time));
-		}
-		return beacons;
-	}
-
 	public static String getCSVHeader() {
 		return "time, UUID1, UUID2, Major, Minor, distance";
-	}
-
-	public void writeToDataOutputStream(DataOutputStream dos) throws IOException {
-		dos.writeLong(uuid1);
-		dos.writeLong(uuid2);
-		dos.writeLong(major);
-		dos.writeLong(minor);
-		dos.writeFloat(distance);
 	}
 
 	public String toString() {
