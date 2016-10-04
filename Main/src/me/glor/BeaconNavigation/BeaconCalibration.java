@@ -1,6 +1,5 @@
 package me.glor.BeaconNavigation;
 
-
 import me.glor.Run;
 import me.glor.RunExternal;
 import me.glor.TransmissionHandler;
@@ -11,19 +10,15 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-
 public class BeaconCalibration {
 	public static String formulaToString(float[] ddat, float[] xdat) {
 		String s1 = "xdat = [" + xdat[0];
+		String s2 = "ddat = [" + ddat[0];
 		for (int i = 1; i < xdat.length; i++) {
 			s1 += "," + xdat[i];
-		}
-		s1 += "];\n";
-
-		String s2 = "ddat = [" + ddat[0];
-		for (int i = 1; i < ddat.length; i++) {
 			s2 += "," + ddat[i];
 		}
+		s1 += "];\n";
 		s2 += "];\n";
 
 		String s3 = "[xmin,fval] = fminsearch(@(x) sum((ddat-(x(1)*(xdat).^x(2)+x(3))).^2),[0;0;0]);\ndisp(xmin(1));\ndisp(xmin(2));\ndisp(xmin(3));\n";
@@ -49,6 +44,6 @@ public class BeaconCalibration {
 		//System.out.println("NEXUS 5 MODE");
 		//th.writeCalibrate(0.42093,6.9476,0.5992);
 
-		th.writeCalibrate(a,b,c);
+		th.writeCalibrate(a, b, c);
 	}
 }

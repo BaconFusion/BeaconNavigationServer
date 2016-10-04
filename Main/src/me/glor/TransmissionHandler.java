@@ -10,12 +10,22 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import me.glor.Run;
+import me.glor.Window.PositionNotifier;
+
 /**
  * Created by glor on 9/27/16.
  */
 public class TransmissionHandler {
 	private DataInputStream dis;
 	private DataOutputStream dos;
+
+	private static PositionNotifier positionNotifier = new PositionNotifier(){
+		@Override
+		public void updateData(Position x, Position[] beacons, int[] identifiers){
+			;
+		}
+	};
 
 	private TransmissionHandler() {
 		throw new UnsupportedOperationException();
@@ -66,6 +76,9 @@ public class TransmissionHandler {
 	}
 
 	public synchronized void sendPositions(Position x, Position[] beacons, int[] identifiers) throws IOException {
+		System.out.println("UUUUUUUUUUHHHHHHHHHUUUUUUUUUUUUUHUHUHU");
+		positionNotifier.updateData(x, beacons, identifiers);
+		/*
 		dos.writeByte(Run.MODUS_BEACON_BROADCAST);
 		dos.writeFloat((float) x.x());
 		dos.writeFloat((float) x.y());
@@ -74,7 +87,8 @@ public class TransmissionHandler {
 			dos.writeFloat((float)beacons[i].x());
 			dos.writeFloat((float)beacons[i].y());
 			dos.writeInt(identifiers[i]);
-		}
+		}*/
+		//me.glor.Window.Cartesian.start(x, beacons, identifiers);
 	}
 	public synchronized float[][] receiveCalibrate() throws IOException {
 		int length = dis.readByte();
@@ -92,5 +106,9 @@ public class TransmissionHandler {
 		dos.writeFloat((float)a);
 		dos.writeFloat((float)b);
 		dos.writeFloat((float)c);
+	}
+
+	public static void setPositionNotifier(PositionNotifier p){
+		positionNotifier = p;
 	}
 }

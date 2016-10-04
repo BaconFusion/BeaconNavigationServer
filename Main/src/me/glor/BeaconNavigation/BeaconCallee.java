@@ -52,7 +52,11 @@ public class BeaconCallee implements Callee<Beacon> {
 		float x2 = Float.parseFloat(line[2]);
 		return new Position(x1, x2);
 	}
+	/*public static int xi = 0;
+	public static int yi = 0;
+	public nextI(double x, double y) {
 
+	}*/
 	@Override
 	public void calcPosition(Collection<Beacon> collection) {
 		Position[] vectors = new Position[collection.size()];
@@ -73,6 +77,12 @@ public class BeaconCallee implements Callee<Beacon> {
 		}
 		Position result = calcPositionOctave(len, vectors, lengths);
 		System.out.println(result);
+
+		try {
+			th.sendPositions(result,null,null);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		System.out.flush();
 		/*
 		sum[0] += result.x();

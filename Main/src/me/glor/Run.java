@@ -1,6 +1,8 @@
 package me.glor;
 
 import me.glor.BeaconNavigation.BeaconCalibration;
+import me.glor.Matrix.Position;
+import me.glor.Window.Cartesian;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -45,6 +47,7 @@ public class Run implements Runnable {
 
 	public static void main(String[] args) {
 
+		Cartesian.start();
 		Logger log = Logger.getLogFile();
 		log.println("System log file");
 
@@ -93,7 +96,7 @@ public class Run implements Runnable {
 				modus = th.getModus();
 				switch (modus) {
 					case MODUS_BEACON_BROADCAST:
-						System.out.println("MODUS_BEACON_BROADCAST");
+						//System.out.println("MODUS_BEACON_BROADCAST");
 						server.runBeacon();
 						break;
 					case MODUS_BEACON_CALIBRATE:

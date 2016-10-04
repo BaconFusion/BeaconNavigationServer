@@ -36,11 +36,11 @@ public class Server {
 		try {
 			Collection<Beacon> data = th.readBeacons();
 			beaconTable.update(data);
-			System.out.println();
+			/*System.out.println();
 			for (Beacon beacon : data) {
 				log.println(beacon.toCSVLine());
 				System.out.println(beacon.distance);
-			}
+			}*/
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
